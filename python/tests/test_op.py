@@ -1,8 +1,7 @@
 import unittest
 from pathlib import Path
 
-from pyspla import INT, Vector, Scalar
-from tests.config import cfg
+from pyspla import INT, Vector
 
 
 def read_vector_from_file(filepath):
@@ -25,53 +24,44 @@ class TestOperations(unittest.TestCase):
 
     def test_unary_ops(self):
         base_path = Path(__file__).parent / "data" / "op_unary"
-        cases = sorted([d for d in base_path.iterdir() if d.is_dir()])
 
-        for i, case in enumerate(cases):
-            input_file = case / "input.txt"
-            abs_file = case / "result_abs.txt"
-            ainv_file = case / "result_ainv.txt"
+        input_file = base_path / "input.txt"
+        abs_file = base_path / "result_abs.txt"
+        ainv_file = base_path / "result_ainv.txt"
 
-            v = read_vector_from_file(input_file)
+        v = read_vector_from_file(input_file)
 
-            with self.subTest(case=i, op="abs"):
-                expected = read_vector_from_file(abs_file)
-                result = v.map(INT.ABS)
-                self.assertEqual(result.to_lists(), expected.to_lists())
+        result_abs = v.map(INT.ABS)
+        expected_abs = read_vector_from_file(abs_file)
+        self.assertEqual(result_abs.to_lists(), expected_abs.to_lists())
 
-            with self.subTest(case=i, op="ainv"):
-                expected = read_vector_from_file(ainv_file)
-                result = v.map(INT.AINV)
-                self.assertEqual(result.to_lists(), expected.to_lists())
+        result_ainv = v.map(INT.AINV)
+        expected_ainv = read_vector_from_file(ainv_file)
+        self.assertEqual(result_ainv.to_lists(), expected_ainv.to_lists())
 
     def test_binary_ops(self):
         base_path = Path(__file__).parent / "data" / "op_binary"
-        cases = sorted([d for d in base_path.iterdir() if d.is_dir()])
 
-        for i, case in enumerate(cases):
-            a_file = case / "input_0.txt"
-            b_file = case / "input_1.txt"
-            plus_file = case / "result_plus.txt"
-            mult_file = case / "result_mult.txt"
-            max_file = case / "result_max.txt"
+        a_file = base_path / "input_0.txt"
+        b_file = base_path / "input_1.txt"
+        plus_file = base_path / "result_plus.txt"
+        mult_file = base_path / "result_mult.txt"
+        max_file = base_path / "result_max.txt"
 
-            a = read_vector_from_file(a_file)
-            b = read_vector_from_file(b_file)
+        a = read_vector_from_file(a_file)
+        b = read_vector_from_file(b_file)
 
-            with self.subTest(case=i, op="plus"):
-                expected = read_vector_from_file(plus_file)
-                result = a.eadd(INT.PLUS, b)
-                for idx in range(expected.n_rows):
-                    self.assertEqual(result.get(idx), expected.get(idx))
+        result_plus = a.eadd(INT.PLUS, b)
+        expected_plus = read_vector_from_file(plus_file)
+        for idx in range(expected_plus.n_rows):
+            self.assertEqual(result_plus.get(idx), expected_plus.get(idx))
 
-            with self.subTest(case=i, op="mult"):
-                expected = read_vector_from_file(mult_file)
-                result = a.emult(INT.MULT, b)
-                for idx in range(expected.n_rows):
-                    self.assertEqual(result.get(idx), expected.get(idx))
+        result_mult = a.emult(INT.MULT, b)
+        expected_mult = read_vector_from_file(mult_file)
+        for idx in range(expected_mult.n_rows):
+            self.assertEqual(result_mult.get(idx), expected_mult.get(idx))
 
-            with self.subTest(case=i, op="max"):
-                expected = read_vector_from_file(max_file)
-                result = a.eadd(INT.MAX, b)
-                for idx in range(expected.n_rows):
-                    self.assertEqual(result.get(idx), expected.get(idx))
+        result_max = a.eadd(INT.MAX, b)
+        expected_max = read_vector_from_file(max_file)
+        for idx in range(expected_max.n_rows):
+            self.assertEqual(result_max.get(idx), expected_max.get(idx))

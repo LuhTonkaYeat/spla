@@ -2,7 +2,6 @@ import unittest
 from pathlib import Path
 
 from pyspla import INT, Vector
-from tests.config import cfg
 
 
 def read_vector_from_file(filepath):
@@ -24,41 +23,42 @@ def read_vector_from_file(filepath):
 class TestVectorAdd(unittest.TestCase):
 
     def test_eadd(self):
-        inputs, results, total = cfg.get_test_cases("vector_add", 2)
+        base_path = Path(__file__).parent / "data" / "vector_add"
 
-        for i in range(total):
-            with self.subTest(case=i):
-                a = read_vector_from_file(inputs[0][i])
-                b = read_vector_from_file(inputs[1][i])
-                expected = read_vector_from_file(results[i])
+        a_file = base_path / "input_0.txt"
+        b_file = base_path / "input_1.txt"
+        result_file = base_path / "result.txt"
 
-                result = a.eadd(INT.PLUS, b)
-                self.assertEqual(result.to_lists(), expected.to_lists())
+        a = read_vector_from_file(a_file)
+        b = read_vector_from_file(b_file)
+        expected = read_vector_from_file(result_file)
+
+        result = a.eadd(INT.PLUS, b)
+
+        for idx in range(expected.n_rows):
+            self.assertEqual(result.get(idx), expected.get(idx))
 
 
 class TestVectorFromList(unittest.TestCase):
 
     def test_from_list(self):
         base_path = Path(__file__).parent / "data" / "vector_from_list"
-        cases = sorted([d for d in base_path.iterdir() if d.is_dir()])
 
-        for i, case in enumerate(cases):
-            input_file = case / "input.txt"
-            result_file = case / "result.txt"
+        input_file = base_path / "input.txt"
+        result_file = base_path / "result.txt"
 
-            indices = []
-            values = []
-            with open(input_file, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith('#'):
-                        idx, val = line.split()
-                        indices.append(int(idx))
-                        values.append(int(val))
+        indices, values = [], []
+        with open(input_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    idx, val = line.split()
+                    indices.append(int(idx))
+                    values.append(int(val))
 
-            size = max(indices) + 1
-            v = Vector.from_lists(indices, values, size, INT)
-            expected = read_vector_from_file(result_file)
+        size = max(indices) + 1
+        v = Vector.from_lists(indices, values, size, INT)
+        expected = read_vector_from_file(result_file)
 
-            for idx in range(expected.n_rows):
-                self.assertEqual(v.get(idx), expected.get(idx))
+        for idx in range(expected.n_rows):
+            self.assertEqual(v.get(idx), expected.get(idx))

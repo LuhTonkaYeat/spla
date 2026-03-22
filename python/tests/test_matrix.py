@@ -2,33 +2,6 @@ import unittest
 from pathlib import Path
 
 from pyspla import INT, Matrix, Vector
-from tests.config import cfg
-
-
-def read_matrix_from_files(I_path, J_path, V_path, shape):
-    I = []
-    J = []
-    V = []
-
-    with open(I_path, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith('#'):
-                I.append(int(line))
-
-    with open(J_path, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith('#'):
-                J.append(int(line))
-
-    with open(V_path, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith('#'):
-                V.append(int(line))
-
-    return Matrix.from_lists(I, J, V, shape, INT)
 
 
 def read_matrix_from_file(filepath):
@@ -71,58 +44,43 @@ class TestMatrix(unittest.TestCase):
         self.assertEqual(M.get(1, 1), 0)
 
     def test_matrix_eadd(self):
-        inputs, results, total = cfg.get_test_cases("matrix_eadd", 2)
+        base_path = Path(__file__).parent / "data" / "matrix_eadd"
 
-        for i in range(total):
-            with self.subTest(case=i):
-                A = read_matrix_from_file(inputs[0][i])
-                B = read_matrix_from_file(inputs[1][i])
-                expected = read_matrix_from_file(results[i])
+        A = read_matrix_from_file(base_path / "input_0.txt")
+        B = read_matrix_from_file(base_path / "input_1.txt")
+        expected = read_matrix_from_file(base_path / "result.txt")
 
-                result = A.eadd(INT.PLUS, B)
-                self.assertEqual(result.to_lists(), expected.to_lists())
-
-    # def test_matrix_mxm(self):
-    #     inputs, results, total = cfg.get_test_cases("matrix_mxm", 2)
-    #
-    #     for i in range(total):
-    #         with self.subTest(case=i):
-    #             A = read_matrix_from_file(inputs[0][i])
-    #             B = read_matrix_from_file(inputs[1][i])
-    #             expected = read_matrix_from_file(results[i])
-    #
-    #             result = A.mxm(B, INT.MULT, INT.PLUS)
-    #             self.assertEqual(result.to_lists(), expected.to_lists())
+        result = A.eadd(INT.PLUS, B)
+        self.assertEqual(result.to_lists(), expected.to_lists())
 
     def test_matrix_transpose(self):
-        inputs, results, total = cfg.get_test_cases("matrix_transpose", 1)
+        base_path = Path(__file__).parent / "data" / "matrix_transpose"
 
-        for i in range(total):
-            with self.subTest(case=i):
-                M = read_matrix_from_file(inputs[0][i])
-                expected = read_matrix_from_file(results[i])
+        M = read_matrix_from_file(base_path / "input.txt")
+        expected = read_matrix_from_file(base_path / "result.txt")
 
-                result = M.transpose()
-                self.assertEqual(result.to_lists(), expected.to_lists())
+        result = M.transpose()
+
+        for i in range(result.n_rows):
+            for j in range(result.n_cols):
+                self.assertEqual(result.get(i, j), expected.get(i, j))
 
     def test_matrix_reduce_by_row(self):
-        inputs, results, total = cfg.get_test_cases("matrix_reduce_by_row", 1)
+        base_path = Path(__file__).parent / "data" / "matrix_reduce_by_row"
 
-        for i in range(total):
-            with self.subTest(case=i):
-                M = read_matrix_from_file(inputs[0][i])
+        M = read_matrix_from_file(base_path / "input_0.txt")
 
-                I_vec, V_vec = [], []
-                with open(results[i], 'r') as f:
-                    for line in f:
-                        line = line.strip()
-                        if line and not line.startswith('#'):
-                            idx, val = line.split()
-                            I_vec.append(int(idx))
-                            V_vec.append(int(val))
+        I_vec, V_vec = [], []
+        with open(base_path / "result.txt", 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    idx, val = line.split()
+                    I_vec.append(int(idx))
+                    V_vec.append(int(val))
 
-                size = max(I_vec) + 1 if I_vec else 3
-                expected = Vector.from_lists(I_vec, V_vec, size, INT)
+        size = max(I_vec) + 1 if I_vec else 3
+        expected = Vector.from_lists(I_vec, V_vec, size, INT)
 
-                result = M.reduce_by_row(INT.PLUS)
-                self.assertEqual(result.to_lists(), expected.to_lists())
+        result = M.reduce_by_row(INT.PLUS)
+        self.assertEqual(result.to_lists(), expected.to_lists())

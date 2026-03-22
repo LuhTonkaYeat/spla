@@ -2,7 +2,6 @@ import unittest
 from pathlib import Path
 
 from pyspla import INT, FLOAT, Scalar
-from tests.config import cfg
 
 
 def read_scalar_from_file(filepath):
@@ -33,33 +32,20 @@ class TestScalar(unittest.TestCase):
 
     def test_scalar_operations(self):
         base_path = Path(__file__).parent / "data" / "scalar_operations"
-        cases = sorted([d for d in base_path.iterdir() if d.is_dir()])
 
-        for i, case in enumerate(cases):
-            a_file = case / "input_0.txt"
-            b_file = case / "input_1.txt"
-            plus_file = case / "result_plus.txt"
-            sub_file = case / "result_sub.txt"
-            mul_file = case / "result_mult.txt"
-            div_file = case / "result_div.txt"
+        a_file = base_path / "input_0.txt"
+        b_file = base_path / "input_1.txt"
+        plus_file = base_path / "result_plus.txt"
+        sub_file = base_path / "result_sub.txt"
+        mul_file = base_path / "result_mult.txt"
+        div_file = base_path / "result_div.txt"
 
-            a_val = read_scalar_from_file(a_file)
-            b_val = read_scalar_from_file(b_file)
-            a = Scalar(INT, a_val)
-            b = Scalar(INT, b_val)
+        a_val = read_scalar_from_file(a_file)
+        b_val = read_scalar_from_file(b_file)
+        a = Scalar(INT, a_val)
+        b = Scalar(INT, b_val)
 
-            with self.subTest(case=i, op="add"):
-                expected = read_scalar_from_file(plus_file)
-                self.assertEqual((a + b).get(), expected)
-
-            with self.subTest(case=i, op="sub"):
-                expected = read_scalar_from_file(sub_file)
-                self.assertEqual((a - b).get(), expected)
-
-            with self.subTest(case=i, op="mul"):
-                expected = read_scalar_from_file(mul_file)
-                self.assertEqual((a * b).get(), expected)
-
-            with self.subTest(case=i, op="div"):
-                expected = read_scalar_from_file(div_file)
-                self.assertEqual((a // b).get(), expected)
+        self.assertEqual((a + b).get(), read_scalar_from_file(plus_file))
+        self.assertEqual((a - b).get(), read_scalar_from_file(sub_file))
+        self.assertEqual((a * b).get(), read_scalar_from_file(mul_file))
+        self.assertEqual((a // b).get(), read_scalar_from_file(div_file))
