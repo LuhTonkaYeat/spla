@@ -16,6 +16,7 @@ setup.py
 ./pyspla/op.py
 ./pyspla/scalar.py
 ./pyspla/schedule.py
+./pyspla/spla_x64.dll
 ./pyspla/type.py
 ./pyspla/vector.py
 ./pyspla/version.py
@@ -31,6 +32,7 @@ pyspla/object.py
 pyspla/op.py
 pyspla/scalar.py
 pyspla/schedule.py
+pyspla/spla_x64.dll
 pyspla/type.py
 pyspla/vector.py
 pyspla/version.py
@@ -38,3 +40,8 @@ pyspla.egg-info/PKG-INFO
 pyspla.egg-info/SOURCES.txt
 pyspla.egg-info/dependency_links.txt
 pyspla.egg-info/top_level.txt
+tests/test_array.py
+tests/test_matrix.py
+tests/test_op.py
+tests/test_scalar.py
+tests/test_vector.py
