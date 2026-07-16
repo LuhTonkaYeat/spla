@@ -51,6 +51,7 @@
 #include <cpu/cpu_v_map.hpp>
 #include <cpu/cpu_v_reduce.hpp>
 #include <cpu/cpu_vxm.hpp>
+#include <cpu/cpu_intersect.hpp>
 
 namespace spla {
 
@@ -157,6 +158,11 @@ namespace spla {
         g_registry->add(MAKE_KEY_CPU_0("mxm", INT), std::make_shared<Algo_mxm_cpu<T_INT>>());
         g_registry->add(MAKE_KEY_CPU_0("mxm", UINT), std::make_shared<Algo_mxm_cpu<T_UINT>>());
         g_registry->add(MAKE_KEY_CPU_0("mxm", FLOAT), std::make_shared<Algo_mxm_cpu<T_FLOAT>>());
+
+        // algorthm intersect
+        g_registry->add(MAKE_KEY_CPU_0("intersect", INT), std::make_shared<Algo_intersect_cpu<T_INT>>());
+        g_registry->add(MAKE_KEY_CPU_0("intersect", UINT), std::make_shared<Algo_intersect_cpu<T_UINT>>());
+        g_registry->add(MAKE_KEY_CPU_0("intersect", FLOAT), std::make_shared<Algo_intersect_cpu<T_FLOAT>>());
     }
 
 }// namespace spla
