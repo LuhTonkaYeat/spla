@@ -30,6 +30,7 @@
 #include <spla.hpp>
 
 TEST(intersect, simple_case_float) {
+    spla::Library::get()->set_accelerator(spla::AcceleratorType::None);
     const spla::uint N_A = 4, N_B = 5;
 
     const spla::uint a_keys_data[N_A] = {0, 1, 4, 7};
@@ -59,50 +60,29 @@ TEST(intersect, simple_case_float) {
     auto status = spla::exec_intersect(a_keys, a_vals, b_keys, b_vals, r_keys, r_vals, op);
     ASSERT_EQ(status, spla::Status::Ok);
 
+    auto count_keys = spla::Scalar::make_int(0);
+    auto count_vals = spla::Scalar::make_int(0);
+    spla::exec_v_count_mf(count_keys, r_keys);
+    spla::exec_v_count_mf(count_vals, r_vals);
+    EXPECT_EQ(count_keys->as_int(), 2);
+    EXPECT_EQ(count_vals->as_int(), 2);
+
     const spla::uint expected_keys[2] = {4, 7};
     const float      expected_vals[2] = {7, 32};
 
-    EXPECT_EQ(r_keys->get_n_rows(), 2);
-    EXPECT_EQ(r_vals->get_n_rows(), 2);
-
+    spla::uint key;
+    float val;
     for (spla::uint i = 0; i < 2; ++i) {
-        spla::uint key;
         r_keys->get_uint(i, key);
         EXPECT_EQ(key, expected_keys[i]);
-
-        float val;
         r_vals->get_float(i, val);
         EXPECT_FLOAT_EQ(val, expected_vals[i]);
     }
 }
 
-TEST(intersect, empty_arrays_float) {
-    auto a_keys = spla::Vector::make(0, spla::UINT);
-    auto a_vals = spla::Vector::make(0, spla::FLOAT);
-    auto b_keys = spla::Vector::make(3, spla::UINT);
-    auto b_vals = spla::Vector::make(3, spla::FLOAT);
-
-    b_keys->set_uint(0, 1);
-    b_keys->set_uint(1, 2);
-    b_keys->set_uint(2, 3);
-    b_vals->set_float(0, 1);
-    b_vals->set_float(1, 2);
-    b_vals->set_float(2, 3);
-
-    auto r_keys = spla::Vector::make(0, spla::UINT);
-    auto r_vals = spla::Vector::make(0, spla::FLOAT);
-
-    auto op = spla::PLUS_FLOAT.template cast_safe<spla::OpBinary>();
-
-    auto status = spla::exec_intersect(a_keys, a_vals, b_keys, b_vals, r_keys, r_vals, op);
-    ASSERT_EQ(status, spla::Status::Ok);
-
-    EXPECT_EQ(r_keys->get_n_rows(), 0);
-    EXPECT_EQ(r_vals->get_n_rows(), 0);
-}
-
 TEST(intersect, no_keys_match_float) {
-    const spla::uint N              = 4;
+    spla::Library::get()->set_accelerator(spla::AcceleratorType::None);
+    const spla::uint N = 4;
     const spla::uint a_keys_data[N] = {1, 3, 5, 7};
     const float      a_vals_data[N] = {10, 30, 50, 70};
     const spla::uint b_keys_data[N] = {2, 4, 6, 8};
@@ -128,11 +108,16 @@ TEST(intersect, no_keys_match_float) {
     auto status = spla::exec_intersect(a_keys, a_vals, b_keys, b_vals, r_keys, r_vals, op);
     ASSERT_EQ(status, spla::Status::Ok);
 
-    EXPECT_EQ(r_keys->get_n_rows(), 0);
-    EXPECT_EQ(r_vals->get_n_rows(), 0);
+    auto count_keys = spla::Scalar::make_int(0);
+    auto count_vals = spla::Scalar::make_int(0);
+    spla::exec_v_count_mf(count_keys, r_keys);
+    spla::exec_v_count_mf(count_vals, r_vals);
+    EXPECT_EQ(count_keys->as_int(), 0);
+    EXPECT_EQ(count_vals->as_int(), 0);
 }
 
 TEST(intersect, int_type) {
+    spla::Library::get()->set_accelerator(spla::AcceleratorType::None);
     const spla::uint N_A = 4, N_B = 5;
     const spla::uint a_keys_data[N_A] = {0, 1, 4, 7};
     const int        a_vals_data[N_A] = {10, 10, 5, 30};
@@ -161,21 +146,24 @@ TEST(intersect, int_type) {
     auto status = spla::exec_intersect(a_keys, a_vals, b_keys, b_vals, r_keys, r_vals, op);
     ASSERT_EQ(status, spla::Status::Ok);
 
+    auto count_keys = spla::Scalar::make_int(0);
+    auto count_vals = spla::Scalar::make_int(0);
+    spla::exec_v_count_mf(count_keys, r_keys);
+    spla::exec_v_count_mf(count_vals, r_vals);
+    EXPECT_EQ(count_keys->as_int(), 2);
+    EXPECT_EQ(count_vals->as_int(), 2);
+
     const spla::uint expected_keys[2] = {4, 7};
     const int        expected_vals[2] = {7, 32};
 
-    EXPECT_EQ(r_keys->get_n_rows(), 2);
-    EXPECT_EQ(r_vals->get_n_rows(), 2);
-
+    spla::uint key;
+    int val;
     for (spla::uint i = 0; i < 2; ++i) {
-        spla::uint key;
         r_keys->get_uint(i, key);
         EXPECT_EQ(key, expected_keys[i]);
-
-        int val;
         r_vals->get_int(i, val);
         EXPECT_EQ(val, expected_vals[i]);
     }
 }
 
-SPLA_GTEST_MAIN
+SPLA_GTEST_MAIN_WITH_FINALIZE

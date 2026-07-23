@@ -58,58 +58,108 @@ namespace spla {
 
         Status execute(const DispatchContext& ctx) override {
             auto t = ctx.task.template cast_safe<ScheduleTask_intersect>();
+            if (!t) {
+                LOG_MSG(Status::Error, "Failed to cast task to ScheduleTask_intersect");
+                return Status::Error;
+            }
 
-            ref_ptr<TVector<uint32_t>> a_keys_vec = t->a_keys.template cast_safe<TVector<uint32_t>>();
-            ref_ptr<TVector<T>>        a_vals_vec = t->a_vals.template cast_safe<TVector<T>>();
-            ref_ptr<TVector<uint32_t>> b_keys_vec = t->b_keys.template cast_safe<TVector<uint32_t>>();
-            ref_ptr<TVector<T>>        b_vals_vec = t->b_vals.template cast_safe<TVector<T>>();
+            if (!t->a_keys || !t->b_keys) {
+                LOG_MSG(Status::Error, "Null input vectors");
+                return Status::Error;
+            }
 
-            ref_ptr<TVector<uint32_t>> r_keys_vec = t->r_keys.template cast_safe<TVector<uint32_t>>();
-            ref_ptr<TVector<T>>        r_vals_vec = t->r_vals.template cast_safe<TVector<T>>();
+            const uint a_size = t->a_keys->get_n_rows();
+            const uint b_size = t->b_keys->get_n_rows();
 
-            ref_ptr<TOpBinary<T, T, T>> op = t->op.template cast_safe<TOpBinary<T, T, T>>();
+            if (a_size == 0 || b_size == 0) {
+                if (t->r_keys) t->r_keys->clear();
+                if (t->r_vals) t->r_vals->clear();
+                return Status::Ok;
+            }
 
-            r_keys_vec->validate_wd(FormatVector::CpuDok);
-            r_vals_vec->validate_wd(FormatVector::CpuDok);
-            a_keys_vec->validate_rw(FormatVector::CpuDok);
-            a_vals_vec->validate_rw(FormatVector::CpuDok);
-            b_keys_vec->validate_rw(FormatVector::CpuDok);
-            b_vals_vec->validate_rw(FormatVector::CpuDok);
+            auto a_keys_vec = t->a_keys.template cast_safe<TVector<uint32_t>>();
+            if (!a_keys_vec) {
+                LOG_MSG(Status::Error, "Failed to cast a_keys to TVector<uint32_t>");
+                return Status::Error;
+            }
 
-            auto*       p_r_keys = r_keys_vec->template get<CpuDokVec<uint32_t>>();
-            auto*       p_r_vals = r_vals_vec->template get<CpuDokVec<T>>();
-            const auto* p_a_keys = a_keys_vec->template get<CpuDokVec<uint32_t>>();
-            const auto* p_a_vals = a_vals_vec->template get<CpuDokVec<T>>();
-            const auto* p_b_keys = b_keys_vec->template get<CpuDokVec<uint32_t>>();
-            const auto* p_b_vals = b_vals_vec->template get<CpuDokVec<T>>();
+            auto a_vals_vec = t->a_vals.template cast_safe<TVector<T>>();
+            if (!a_vals_vec) {
+                LOG_MSG(Status::Error, "Failed to cast a_vals to TVector<T>");
+                return Status::Error;
+            }
 
+            auto b_keys_vec = t->b_keys.template cast_safe<TVector<uint32_t>>();
+            if (!b_keys_vec) {
+                LOG_MSG(Status::Error, "Failed to cast b_keys to TVector<uint32_t>");
+                return Status::Error;
+            }
+
+            auto b_vals_vec = t->b_vals.template cast_safe<TVector<T>>();
+            if (!b_vals_vec) {
+                LOG_MSG(Status::Error, "Failed to cast b_vals to TVector<T>");
+                return Status::Error;
+            }
+
+            auto r_keys_vec = t->r_keys.template cast_safe<TVector<uint32_t>>();
+            if (!r_keys_vec) {
+                LOG_MSG(Status::Error, "Failed to cast r_keys to TVector<uint32_t>");
+                return Status::Error;
+            }
+
+            auto r_vals_vec = t->r_vals.template cast_safe<TVector<T>>();
+            if (!r_vals_vec) {
+                LOG_MSG(Status::Error, "Failed to cast r_vals to TVector<T>");
+                return Status::Error;
+            }
+
+            auto op = t->op.template cast_safe<TOpBinary<T, T, T>>();
+            if (!op) {
+                LOG_MSG(Status::Error, "Failed to cast binary operation");
+                return Status::Error;
+            }
+
+            r_keys_vec->validate_wd(FormatVector::CpuCoo);
+            r_vals_vec->validate_wd(FormatVector::CpuCoo);
+            a_keys_vec->validate_rw(FormatVector::CpuDense);
+            a_vals_vec->validate_rw(FormatVector::CpuDense);
+            b_keys_vec->validate_rw(FormatVector::CpuDense);
+            b_vals_vec->validate_rw(FormatVector::CpuDense);
+
+            auto* p_r_keys = r_keys_vec->template get<CpuCooVec<uint32_t>>();
+            auto* p_r_vals = r_vals_vec->template get<CpuCooVec<T>>();
+            const auto* p_a_keys = a_keys_vec->template get<CpuDenseVec<uint32_t>>();
+            const auto* p_a_vals = a_vals_vec->template get<CpuDenseVec<T>>();
+            const auto* p_b_keys = b_keys_vec->template get<CpuDenseVec<uint32_t>>();
+            const auto* p_b_vals = b_vals_vec->template get<CpuDenseVec<T>>();
+
+            p_r_keys->Ai.clear();
             p_r_keys->Ax.clear();
+            p_r_vals->Ai.clear();
             p_r_vals->Ax.clear();
             p_r_keys->values = 0;
             p_r_vals->values = 0;
 
             const auto& function = op->function;
 
-            auto it_a  = p_a_keys->Ax.begin();
-            auto it_b  = p_b_keys->Ax.begin();
-            auto end_a = p_a_keys->Ax.end();
-            auto end_b = p_b_keys->Ax.end();
-
-            while (it_a != end_a && it_b != end_b) {
-                uint32_t key_a = it_a->first;
-                uint32_t key_b = it_b->first;
+            uint i = 0, j = 0;
+            while (i < a_size && j < b_size) {
+                const uint32_t key_a = p_a_keys->Ax[i];
+                const uint32_t key_b = p_b_keys->Ax[j];
 
                 if (key_a < key_b) {
-                    ++it_a;
+                    ++i;
                 } else if (key_b < key_a) {
-                    ++it_b;
+                    ++j;
                 } else {
-                    p_r_keys->Ax[key_a] = key_a;
-                    p_r_vals->Ax[key_a] = function(it_a->second, it_b->second);
+                    p_r_keys->Ai.push_back(p_r_keys->values);
+                    p_r_keys->Ax.push_back(key_a);
+                    p_r_vals->Ai.push_back(p_r_vals->values);
+                    p_r_vals->Ax.push_back(function(p_a_vals->Ax[i], p_b_vals->Ax[j]));
                     p_r_keys->values++;
                     p_r_vals->values++;
-                    ++it_a;
-                    ++it_b;
+                    ++i;
+                    ++j;
                 }
             }
 
@@ -118,6 +168,6 @@ namespace spla {
         }
     };
 
-}//namespace spla
+}// namespace spla
 
 #endif//SPLA_CPU_INTERSECT_HPP

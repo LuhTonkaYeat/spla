@@ -496,7 +496,7 @@ namespace spla {
     std::string ScheduleTask_intersect::get_key() {
         std::stringstream key;
         key << get_name()
-            << TYPE_KEY(r_keys->get_type());
+            << TYPE_KEY(r_vals->get_type());
         return key.str();
     }
     std::string ScheduleTask_intersect::get_key_full() {
