@@ -126,8 +126,8 @@ namespace spla {
             b_keys_vec->validate_rw(FormatVector::CpuDense);
             b_vals_vec->validate_rw(FormatVector::CpuDense);
 
-            auto* p_r_keys = r_keys_vec->template get<CpuCooVec<uint32_t>>();
-            auto* p_r_vals = r_vals_vec->template get<CpuCooVec<T>>();
+            auto*       p_r_keys = r_keys_vec->template get<CpuCooVec<uint32_t>>();
+            auto*       p_r_vals = r_vals_vec->template get<CpuCooVec<T>>();
             const auto* p_a_keys = a_keys_vec->template get<CpuDenseVec<uint32_t>>();
             const auto* p_a_vals = a_vals_vec->template get<CpuDenseVec<T>>();
             const auto* p_b_keys = b_keys_vec->template get<CpuDenseVec<uint32_t>>();
@@ -142,6 +142,7 @@ namespace spla {
 
             const auto& function = op->function;
 
+            // Two-pointer scan over sorted arrays
             uint i = 0, j = 0;
             while (i < a_size && j < b_size) {
                 const uint32_t key_a = p_a_keys->Ax[i];
@@ -152,6 +153,7 @@ namespace spla {
                 } else if (key_b < key_a) {
                     ++j;
                 } else {
+                    // Match found
                     p_r_keys->Ai.push_back(p_r_keys->values);
                     p_r_keys->Ax.push_back(key_a);
                     p_r_vals->Ai.push_back(p_r_vals->values);
